@@ -13,32 +13,30 @@
 				overflow: hidden;
 			}
 			#info {
-				position: absolute;
+
+				left:10px;
 				top: 10px;
 				width: 100%;
-				text-align: center;
+				text-align: left;
 				z-index: 100;
 				display:block;
 			}
-			#info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer }
+			#info a, .button { color: #fff; font-weight: bold; text-decoration: underline; cursor: pointer }
 		</style>
 	</head>
 	<body>
 
+		<input type="button" id="switchs" value="<" onclick="switchs()">
 		<div id="info">
-		<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - procedural 3D text by <a href="http://www.lab4games.net/zz85/blog" target="_blank" rel="noopener">zz85</a> &amp; alteredq
-		<br/>type to enter new text, drag to spin the text
-		<br/><span class="button" id="color">change color</span>,
-			<span class="button" id="font">change font</span>,
-			<span class="button" id="weight">change weight</span>,
-			<span class="button" id="bevel">change bevel</span>
-			<a id="permalink" href="#">permalink</a>
+			<input class="button" id="color" type="color" value="#ffffff"><br>
+			<span class="button" id="font">change font</span><br>
+			<span class="button" id="weight">change weight</span><br>
+			<span class="button" id="bevel">change bevel</span><br>
 		</div>
 
 
 		<script src="../build/three.js"></script>
 		<script src="js/utils/GeometryUtils.js"></script>
-
 		<script src="js/WebGL.js"></script>
 		<script src="js/libs/stats.min.js"></script>
 
@@ -63,7 +61,7 @@
 			var text = "three.js",
 
 				height = 20,
-				size = 70,
+				size = 80,
 				hover = 30,
 
 				curveSegments = 4,
@@ -113,6 +111,16 @@
 			init();
 			animate();
 
+			function switchs() {
+				if(document.getElementById('switchs').value == '<') {
+					document.getElementById('info').style.display = 'none';
+					document.getElementById('switchs').value = '>';
+				}else {
+					document.getElementById('info').style.display = 'block'
+					document.getElementById('switchs').value ='<';
+				}
+			}
+
 			function decimalToHex( d ) {
 
 				var hex = Number( d ).toString( 16 );
@@ -125,8 +133,6 @@
 
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
-
-				permalink = document.getElementById( "permalink" );
 
 				// CAMERA
 
@@ -143,12 +149,12 @@
 
 				// LIGHTS
 
-				var dirLight = new THREE.DirectionalLight( 0xffffff, 0.125 );
-				dirLight.position.set( 0, 0, 1 ).normalize();
+				var dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+				dirLight.position.set( 0, 0, 0).normalize();
 				scene.add( dirLight );
 
 				var pointLight = new THREE.PointLight( 0xffffff, 1.5 );
-				pointLight.position.set( 0, 100, 90 );
+				pointLight.position.set( 0, 100, 100 );
 				scene.add( pointLight );
 
 				// Get text from hash
@@ -172,8 +178,6 @@
 					bevelEnabled = parseInt( bevelhash );
 
 					text = decodeURI( texthash );
-
-					updatePermalink();
 
 				} else {
 
@@ -222,12 +226,9 @@
 				document.addEventListener( 'keypress', onDocumentKeyPress, false );
 				document.addEventListener( 'keydown', onDocumentKeyDown, false );
 
-				document.getElementById( "color" ).addEventListener( 'click', function () {
-
-					pointLight.color.setHSL( Math.random(), 1, 0.5 );
-					hex = decimalToHex( pointLight.color.getHex() );
-
-					updatePermalink();
+				document.getElementById( "color" ).addEventListener( 'change', function () {
+					pointLight.color = new THREE.Color( document.getElementById( "color" ).value );
+					hex = decimalToHex( document.getElementById( "color" ).value );
 
 				}, false );
 
@@ -288,15 +289,6 @@
 			function boolToNum( b ) {
 
 				return b ? 1 : 0;
-
-			}
-
-			function updatePermalink() {
-
-				var link = hex + fontMap[ fontName ] + weightMap[ fontWeight ] + boolToNum( bevelEnabled ) + "#" + encodeURI( text );
-
-				permalink.href = "#" + link;
-				window.location.hash = link;
 
 			}
 
@@ -369,57 +361,13 @@
 					size: size,
 					height: height,
 					curveSegments: curveSegments,
-
 					bevelThickness: bevelThickness,
 					bevelSize: bevelSize,
 					bevelEnabled: bevelEnabled
-
 				} );
 
 				textGeo.computeBoundingBox();
 				textGeo.computeVertexNormals();
-
-				// "fix" side normals by removing z-component of normals for side faces
-				// (this doesn't work well for beveled geometry as then we lose nice curvature around z-axis)
-
-				if ( ! bevelEnabled ) {
-
-					var triangleAreaHeuristics = 0.1 * ( height * size );
-
-					for ( var i = 0; i < textGeo.faces.length; i ++ ) {
-
-						var face = textGeo.faces[ i ];
-
-						if ( face.materialIndex == 1 ) {
-
-							for ( var j = 0; j < face.vertexNormals.length; j ++ ) {
-
-								face.vertexNormals[ j ].z = 0;
-								face.vertexNormals[ j ].normalize();
-
-							}
-
-							var va = textGeo.vertices[ face.a ];
-							var vb = textGeo.vertices[ face.b ];
-							var vc = textGeo.vertices[ face.c ];
-
-							var s = THREE.GeometryUtils.triangleArea( va, vb, vc );
-
-							if ( s > triangleAreaHeuristics ) {
-
-								for ( var j = 0; j < face.vertexNormals.length; j ++ ) {
-
-									face.vertexNormals[ j ].copy( face.normal );
-
-								}
-
-							}
-
-						}
-
-					}
-
-				}
 
 				var centerOffset = - 0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
 
@@ -454,8 +402,6 @@
 			}
 
 			function refreshText() {
-
-				updatePermalink();
 
 				group.remove( textMesh1 );
 				if ( mirror ) group.remove( textMesh2 );
