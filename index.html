@@ -13,25 +13,32 @@
 				overflow: hidden;
 			}
 			#info {
-
+				position:absolute;
+				float:left;
 				left:10px;
 				top: 10px;
-				width: 100%;
 				text-align: left;
 				z-index: 100;
-				display:block;
+				display:inline-block;
 			}
 			#info a, .button { color: #fff; font-weight: bold; text-decoration: underline; cursor: pointer }
 		</style>
 	</head>
 	<body>
-
-		<input type="button" id="switchs" value="<" onclick="switchs()">
 		<div id="info">
 			<input class="button" id="color" type="color" value="#ffffff"><br>
 			<span class="button" id="font">change font</span><br>
 			<span class="button" id="weight">change weight</span><br>
 			<span class="button" id="bevel">change bevel</span><br>
+			<input id="font_size" min="1" max="300" value="80" type="number">font-size<br>
+			<input id="height_size" min="1" max="10" value="1" type="number">height<br>
+			<input id="mirror" value="true" type="checkbox" class="button">mirror<br>
+			<span class="button">rotation:</span><br>
+			<div style="margin-left: 5px">
+				<input id="x_rotation" value="true" type="checkbox" class="button">x_rotation<br>
+				<input id="y_rotation" value="true" type="checkbox" class="button">y_rotation<br>
+				<input id="z_rotation" value="true" type="checkbox" class="button">z_rotation<br>
+			</div>
 		</div>
 
 
@@ -58,13 +65,8 @@
 
 			var firstLetter = true;
 
-			var text = "three.js",
-
-				height = 20,
-				size = 80,
+			var text = "NTUST",
 				hover = 30,
-
-				curveSegments = 4,
 
 				bevelThickness = 2,
 				bevelSize = 1.5,
@@ -111,16 +113,6 @@
 			init();
 			animate();
 
-			function switchs() {
-				if(document.getElementById('switchs').value == '<') {
-					document.getElementById('info').style.display = 'none';
-					document.getElementById('switchs').value = '>';
-				}else {
-					document.getElementById('info').style.display = 'block'
-					document.getElementById('switchs').value ='<';
-				}
-			}
-
 			function decimalToHex( d ) {
 
 				var hex = Number( d ).toString( 16 );
@@ -154,7 +146,7 @@
 				scene.add( dirLight );
 
 				var pointLight = new THREE.PointLight( 0xffffff, 1.5 );
-				pointLight.position.set( 0, 100, 100 );
+				pointLight.position.set( 0, 0, 1000 );
 				scene.add( pointLight );
 
 				// Get text from hash
@@ -198,13 +190,6 @@
 
 				loadFont();
 
-				var plane = new THREE.Mesh(
-					new THREE.PlaneBufferGeometry( 10000, 10000 ),
-					new THREE.MeshBasicMaterial( { color: 0xffffff, opacity: 0.5, transparent: true } )
-				);
-				plane.position.y = 100;
-				plane.rotation.x = - Math.PI / 2;
-				scene.add( plane );
 
 				// RENDERER
 
@@ -219,10 +204,6 @@
 				//container.appendChild( stats.dom );
 
 				// EVENTS
-
-				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-				document.addEventListener( 'touchstart', onDocumentTouchStart, false );
-				document.addEventListener( 'touchmove', onDocumentTouchMove, false );
 				document.addEventListener( 'keypress', onDocumentKeyPress, false );
 				document.addEventListener( 'keydown', onDocumentKeyDown, false );
 
@@ -242,6 +223,19 @@
 
 				}, false );
 
+				document.getElementById( "font_size" ).addEventListener( 'click', function () {
+					loadFont();
+				}, false );
+
+				document.getElementById( "height_size" ).addEventListener( 'click', function () {
+					loadFont();
+				}, false );
+
+				document.getElementById( "mirror" ).addEventListener( 'click', function () {
+
+					loadFont();
+
+				}, false );
 
 				document.getElementById( "weight" ).addEventListener( 'click', function () {
 
@@ -284,14 +278,6 @@
 
 			}
 
-			//
-
-			function boolToNum( b ) {
-
-				return b ? 1 : 0;
-
-			}
-
 			function onDocumentKeyDown( event ) {
 
 				if ( firstLetter ) {
@@ -304,7 +290,6 @@
 				var keyCode = event.keyCode;
 
 				// backspace
-
 				if ( keyCode == 8 ) {
 
 					event.preventDefault();
@@ -323,7 +308,6 @@
 				var keyCode = event.which;
 
 				// backspace
-
 				if ( keyCode == 8 ) {
 
 					event.preventDefault();
@@ -355,12 +339,9 @@
 			function createText() {
 
 				textGeo = new THREE.TextGeometry( text, {
-
 					font: font,
-
-					size: size,
-					height: height,
-					curveSegments: curveSegments,
+					size: document.getElementById("font_size").value,
+					height: document.getElementById("height_size").value,
 					bevelThickness: bevelThickness,
 					bevelSize: bevelSize,
 					bevelEnabled: bevelEnabled
@@ -380,20 +361,19 @@
 				textMesh1.position.z = 0;
 
 				textMesh1.rotation.x = 0;
-				textMesh1.rotation.y = Math.PI * 2;
-
+				
 				group.add( textMesh1 );
 
-				if ( mirror ) {
+				if ( document.getElementById("mirror").checked ) {
 
 					textMesh2 = new THREE.Mesh( textGeo, materials );
 
 					textMesh2.position.x = centerOffset;
-					textMesh2.position.y = - hover;
-					textMesh2.position.z = height;
+					textMesh2.position.y = -hover;
+					textMesh2.position.z = 0;
 
 					textMesh2.rotation.x = Math.PI;
-					textMesh2.rotation.y = Math.PI * 2;
+					console.log(Math.PI)
 
 					group.add( textMesh2 );
 
@@ -404,78 +384,13 @@
 			function refreshText() {
 
 				group.remove( textMesh1 );
-				if ( mirror ) group.remove( textMesh2 );
+				if ( !document.getElementById("mirror").checked ) group.remove( textMesh2 );
 
 				if ( ! text ) return;
 
 				createText();
 
 			}
-
-			function onDocumentMouseDown( event ) {
-
-				event.preventDefault();
-
-				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-				document.addEventListener( 'mouseup', onDocumentMouseUp, false );
-				document.addEventListener( 'mouseout', onDocumentMouseOut, false );
-
-				mouseXOnMouseDown = event.clientX - windowHalfX;
-				targetRotationOnMouseDown = targetRotation;
-
-			}
-
-			function onDocumentMouseMove( event ) {
-
-				mouseX = event.clientX - windowHalfX;
-
-				targetRotation = targetRotationOnMouseDown + ( mouseX - mouseXOnMouseDown ) * 0.02;
-
-			}
-
-			function onDocumentMouseUp() {
-
-				document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
-				document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
-				document.removeEventListener( 'mouseout', onDocumentMouseOut, false );
-
-			}
-
-			function onDocumentMouseOut() {
-
-				document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
-				document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
-				document.removeEventListener( 'mouseout', onDocumentMouseOut, false );
-
-			}
-
-			function onDocumentTouchStart( event ) {
-
-				if ( event.touches.length == 1 ) {
-
-					event.preventDefault();
-
-					mouseXOnMouseDown = event.touches[ 0 ].pageX - windowHalfX;
-					targetRotationOnMouseDown = targetRotation;
-
-				}
-
-			}
-
-			function onDocumentTouchMove( event ) {
-
-				if ( event.touches.length == 1 ) {
-
-					event.preventDefault();
-
-					mouseX = event.touches[ 0 ].pageX - windowHalfX;
-					targetRotation = targetRotationOnMouseDown + ( mouseX - mouseXOnMouseDown ) * 0.05;
-
-				}
-
-			}
-
-			//
 
 			function animate() {
 
@@ -487,8 +402,15 @@
 			}
 
 			function render() {
+				if(document.getElementById('mirror').checked) {
+					rotation = group;
+				} else {
+					rotation = textMesh2;
+				}
+				if(document.getElementById('x_rotation').checked) group.rotation.x += 0.01;
+				if(document.getElementById('y_rotation').checked) group.rotation.y += 0.01;
+				if(document.getElementById('z_rotation').checked) group.rotation.z += 0.01;
 
-				group.rotation.y += ( targetRotation - group.rotation.y ) * 0.05;
 
 				camera.lookAt( cameraTarget );
 
